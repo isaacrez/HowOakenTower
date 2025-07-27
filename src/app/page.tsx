@@ -1,6 +1,3 @@
-import Paper from "@mui/material/Paper";
-import Box from "@mui/material/Box";
-
 import Item from "./item";
 
 export default function Home() {
