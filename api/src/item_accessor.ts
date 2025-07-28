@@ -53,7 +53,7 @@ class ItemAccessor {
     }
 
     getOfRarity(rarity: string): Dictionary<string> {
-        return this._dictionary.filterFor<string>('rarity', 'Epic');
+        return this._dictionary.filterFor<string>('rarity', rarity);
     }
 }
 
