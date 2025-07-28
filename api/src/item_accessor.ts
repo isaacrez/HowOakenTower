@@ -52,7 +52,7 @@ class ItemAccessor {
         });
     }
 
-    getOfRarity(rarity: string): Dictionary<string> {
+    getOfRarity(rarity: string): Dictionary<Item> {
         return this._dictionary.filterFor<string>('rarity', rarity);
     }
 }

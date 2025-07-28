@@ -45,8 +45,8 @@ class Dictionary<T> {
         return this._values
     }
 
-    filterFor<P>(property: string, value: P): Dictionary<P> {
-        const output: Dictionary<P> = new Dictionary([])
+    filterFor<P>(property: string, value: P): Dictionary<T> {
+        const output: Dictionary<T> = new Dictionary([])
 
         if (this.values().length == 0) return output;
         // Shortcircuit if the property does not exist
