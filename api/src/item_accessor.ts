@@ -26,34 +26,86 @@ const PATH = 'data/items_data.tsv'
 
 class ItemAccessor {
     
-    _dictionary: Dictionary<Item> = new Dictionary([]);
+    private static _instance: ItemAccessor;
+    private _dictionary: Dictionary<Item> = new Dictionary([]);
+    private _isLoaded: boolean = false;
 
     constructor() {
+        this.loadData();
+    }
+
+    private loadData(): void {
         fs.readFile(PATH, 'utf8', (err: string, data: string) => {
             if (err) {
                 console.error('Error reading file: ' + err);
                 return;
             }
         
-            data.split("\n").map((line: string) => {
-                const entries: Array<string> = line.split("\t");
-                const item: Item = {
-                name: entries[NAME_INDEX],
-                cooldown: parseFloat(entries[COOLDOWN_INDEX]),
-                cost: parseInt(entries[COST_INDEX]),
-                rarity: entries[RARITY_INDEX],
-                // Commas are common in descriptions, so we use ';' as delimiter
-                tags: entries[TAGS_INDEX].split(";"),
-                effects: entries[EFFECTS_INDEX].split(";"),
+            data.split("\n").forEach((line: string) => {
+                if (line.trim()) {
+                    const entries: Array<string> = line.split("\t");
+                    const item: Item = {
+                        name: entries[NAME_INDEX],
+                        cooldown: parseFloat(entries[COOLDOWN_INDEX]),
+                        cost: parseInt(entries[COST_INDEX]),
+                        rarity: entries[RARITY_INDEX],
+                        // Commas are common in descriptions, so we use ';' as delimiter
+                        tags: entries[TAGS_INDEX].split(";"),
+                        effects: entries[EFFECTS_INDEX].split(";"),
+                    }
+            
+                    this._dictionary.add(item.name, item);
                 }
-        
-                this._dictionary.add(item.name, item);
             });
+            this._isLoaded = true;
         });
     }
 
-    getOfRarity(rarity: string): Dictionary<Item> {
-        return this._dictionary.filterFor<string>('rarity', rarity);
+    static getInstance(): ItemAccessor {
+        if (!ItemAccessor._instance) {
+            ItemAccessor._instance = new ItemAccessor();
+        }
+        return ItemAccessor._instance;
+    }
+
+    static getItemDictionary(): Dictionary<Item> {
+        const instance = ItemAccessor.getInstance();
+        if (!instance._isLoaded) {
+            throw new Error('ItemAccessor data is not yet loaded. Please wait for initialization to complete.');
+        }
+        return instance._dictionary;
+    }
+
+    static getOfRarity(rarity: string, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Dictionary<Item> {
+        return dictionary.filterFor<string>('rarity', rarity);
+    }
+
+    static getOfTags(tag: string, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Dictionary<Item> {
+        const hasTags = dictionary.values().filter((item: Item) => {
+            return item.tags.includes(tag);
+        });
+
+        const output: Dictionary<Item> = new Dictionary([]);
+        hasTags.forEach((item: Item) => {
+            output.add(item.name, item);
+        });
+
+        return output;
+    }
+
+    static getOfName(name: string, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Item | undefined {
+        if (dictionary.hasKey(name)) {
+            return dictionary[name];
+        }
+        return undefined;
+    }
+
+    static getOfCost(cost: number, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Dictionary<Item> {
+        return dictionary.filterFor<number>('cost', cost);
+    }
+
+    static isLoaded(): boolean {
+        return ItemAccessor.getInstance()._isLoaded;
     }
 }
 
