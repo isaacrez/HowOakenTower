@@ -69,12 +69,12 @@ app.get('/name/:name', (req, res) => {
     }
 
     const name = req.params.name;
-    const item = ItemAccessor.getOfName(name);
+    const items = ItemAccessor.getOfName(name);
 
-    if (!item) {
-      res.status(404).json({ error: 'No item found' });
+    if (!items || items.values().length === 0) {
+      res.status(404).json({ error: 'No items found' });
     } else {
-      res.json(item);
+      res.json(items);
     }
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });

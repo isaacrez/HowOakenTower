@@ -1,5 +1,6 @@
 'use strict';
 
+import { match } from "assert";
 import { Dictionary } from "./dictionary";
 // TypeScript couldn't recognize the ES6 module syntax
 // Context: https://stackoverflow.com/questions/50661510/why-doesnt-fs-work-when-imported-as-an-es6-module
@@ -93,11 +94,21 @@ class ItemAccessor {
         return output;
     }
 
-    static getOfName(name: string, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Item | undefined {
-        if (dictionary.hasKey(name)) {
-            return dictionary[name];
-        }
-        return undefined;
+    static getOfName(name: string, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Dictionary<Item> {
+        const searchTerm = name.toLowerCase();
+        const matchingItems: Array<Item> = dictionary.values().filter((item: Item) => {
+            return item.name.toLowerCase().includes(searchTerm);
+        });
+
+        console.log(matchingItems);
+
+        const output: Dictionary<Item> = new Dictionary([]);
+        matchingItems.forEach((item: Item) => {
+            output.add(item.name, item);
+            console.log(output);
+        });
+
+        return output;
     }
 
     static getOfCost(cost: number, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Dictionary<Item> {
