@@ -1,6 +1,5 @@
 'use strict';
 
-import { match } from "assert";
 import { Dictionary } from "./dictionary";
 // TypeScript couldn't recognize the ES6 module syntax
 // Context: https://stackoverflow.com/questions/50661510/why-doesnt-fs-work-when-imported-as-an-es6-module
@@ -13,6 +12,18 @@ interface Item {
     tags: Array<string>;
     effects: Array<string>;
     rarity: string;
+}
+
+export interface Request {
+    property: ItemProperty,
+    value: string,
+}
+
+export enum ItemProperty {
+    Name = "name",
+    Tag = "tag",
+    Cost = "cost",
+    Rarity = "rarity",
 }
 
 const NAME_INDEX = 0;
@@ -77,8 +88,41 @@ class ItemAccessor {
         return instance._dictionary;
     }
 
+    static getOf(filter: Array<Request>): Dictionary<Item> {
+        var output = ItemAccessor.getItemDictionary();
+
+        for (const request of filter) {
+            switch (request.property) {
+                case ItemProperty.Cost:
+                    output = ItemAccessor.getOfCost(request.value, output);
+                    break;
+
+                case ItemProperty.Name:
+                    output = ItemAccessor.getOfName(request.value, output);
+                    break;
+
+                case ItemProperty.Rarity:
+                    output = ItemAccessor.getOfRarity(request.value, output);
+                    break;
+
+                case ItemProperty.Tag:
+                    output = ItemAccessor.getOfTags(request.value, output);
+                    break;
+            }
+        }
+        return output;
+    }
+
     static getOfRarity(rarity: string, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Dictionary<Item> {
-        return dictionary.filterFor<string>('rarity', rarity);
+        const searchTerm = rarity.toLowerCase();
+        const matchingTerms: Array<Item> = dictionary.values().filter((item: Item) => item.rarity.toLowerCase().includes(searchTerm));
+
+        return new Dictionary<Item>(matchingTerms.map((item: Item) => {
+            return {
+                key: item.name,
+                value: item,
+            }
+        }));
     }
 
     static getOfTags(tag: string, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Dictionary<Item> {
@@ -100,19 +144,16 @@ class ItemAccessor {
             return item.name.toLowerCase().includes(searchTerm);
         });
 
-        console.log(matchingItems);
-
         const output: Dictionary<Item> = new Dictionary([]);
         matchingItems.forEach((item: Item) => {
             output.add(item.name, item);
-            console.log(output);
         });
 
         return output;
     }
 
-    static getOfCost(cost: number, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Dictionary<Item> {
-        return dictionary.filterFor<number>('cost', cost);
+    static getOfCost(cost: string, dictionary: Dictionary<Item> = ItemAccessor.getItemDictionary()): Dictionary<Item> {
+        return dictionary.filterFor<number>('cost', parseInt(cost));
     }
 
     static isLoaded(): boolean {

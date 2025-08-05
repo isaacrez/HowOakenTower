@@ -1,6 +1,6 @@
 'use strict';
 
-import { ItemAccessor } from './item_accessor';
+import { ItemAccessor, ItemProperty, Request } from './item_accessor';
 import express from 'express';
 
 const app = express();
@@ -24,78 +24,47 @@ app.listen(port, () => {
   }, 1000);
 });
 
-app.get('/rarity/:rarity', (req, res) => {
+app.get('/item', (req, res) => {
+  // Valid queries: COST / NAME / TAG / RARITY
+  // Example: /item?tag=Spear&tag=Elven -> tag: ['Spear', 'Elven']
+  // Example: /item?tag=Spear&cost=30 -> tag: 'Spear', Cost: '30'
   try {
     if (!ItemAccessor.isLoaded()) {
       return res.status(503).json({ error: 'Service is still loading data. Please try again in a moment.' });
     }
 
-    const rarity = req.params.rarity;
-    const items = ItemAccessor.getOfRarity(rarity);
-
+    const validQueryKeys: Array<ItemProperty> = [
+      ItemProperty.Cost,
+      ItemProperty.Name,
+      ItemProperty.Rarity,
+      ItemProperty.Tag
+    ];
+    
+    // Strip routing information to access pure tags
+    const parsedUrl = req.url.split("?")[1].toLowerCase();
+    const queries = new URLSearchParams(parsedUrl);
+  
+    const requests: Array<Request> = [];
+  
+    for (const key of validQueryKeys) {
+      if (queries.has(key)) {
+        for (const currentRequest of queries.getAll(key)) {
+          requests.push({
+            property: key,
+            value: currentRequest
+          });
+        }
+      }
+    }
+  
+    const items = ItemAccessor.getOf(requests);
     if (!items || items.values().length === 0) {
       res.status(404).json({ error: 'No items found' });
     } else {
       res.json(items);
     }
+
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error' })
   }
-});
-
-app.get('/tags/:tag', (req, res) => {
-  try {
-    if (!ItemAccessor.isLoaded()) {
-      return res.status(503).json({ error: 'Service is still loading data. Please try again in a moment.' });
-    }
-
-    const tag = req.params.tag;
-    const items = ItemAccessor.getOfTags(tag);
-
-    if (!items || items.values().length === 0) {
-      res.status(404).json({ error: 'No items found' });
-    } else {
-      res.json(items);
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/name/:name', (req, res) => {
-  try {
-    if (!ItemAccessor.isLoaded()) {
-      return res.status(503).json({ error: 'Service is still loading data. Please try again in a moment.' });
-    }
-
-    const name = req.params.name;
-    const items = ItemAccessor.getOfName(name);
-
-    if (!items || items.values().length === 0) {
-      res.status(404).json({ error: 'No items found' });
-    } else {
-      res.json(items);
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/cost/:cost', (req, res) => {
-  try {
-    if (!ItemAccessor.isLoaded()) {
-      return res.status(503).json({ error: 'Service is still loading data. Please try again in a moment.' });
-    }
-
-    const cost: number = parseInt(req.params.cost);
-    const items = ItemAccessor.getOfCost(cost);
-
-    if (!items || items.values().length === 0) {
-      res.status(404).json({ error: 'No items found' });
-    } else {
-      res.json(items);
-    }
-  } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+})
