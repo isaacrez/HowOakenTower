@@ -13,9 +13,9 @@
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.2.0",
     "express": "^5.1.0",
-    "next": "^15.4.3",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "next": "^15.4.6",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {

@@ -33,7 +33,7 @@ const RARITY_INDEX = 3;
 const TAGS_INDEX = 4;
 const EFFECTS_INDEX = 5;
 
-const PATH = 'data/items_data.tsv'
+const PATH = 'src/data/items_data.tsv'
 
 
 class ItemAccessor {
